@@ -27,6 +27,23 @@ body {
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
 
+/* ── 화면 전환 / 로딩 흔들림 방지 ───────────────── */
+/* 지원 브라우저(Chrome/Edge 등)에서 페이지 이동 시 부드러운 크로스페이드 */
+@view-transition { navigation: auto; }
+
+/* 헤더가 JS로 주입되기 전에 높이를 미리 확보해 레이아웃 점프 방지 */
+[data-site-header] { display: block; height: var(--header-h); }
+
+/* 페이지 진입 시 부드러운 페이드인 (JS 불필요 → 새로고침·이동 모두 적용) */
+body { animation: pageFadeIn .35s ease both; }
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* 모션 최소화를 선호하는 사용자는 애니메이션 비활성화 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  body { animation: none; }
+}
+
 .container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 24px; }
 
 /* ── 헤더 ─────────────────────────────────────────── */
