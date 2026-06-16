@@ -1,0 +1,102 @@
+/* 사이트 설정(content/site.md)을 읽어 공통 헤더/푸터를 생성한다.
+   비개발자는 content/site.md 만 수정하면 된다. (JS 수정 불필요) */
+const Site = {
+  config: null,
+  _promise: null,
+
+  load() {
+    if (this._promise) return this._promise;
+    this._promise = MD.load("content/site.md").then((md) => {
+      const m = (md && md.meta) || {};
+      this.config = {
+        name: m.name || "STUDIO",
+        tagline: m.tagline || "",
+        kakaoApiKey: m.kakaoApiKey || "",
+        copyright: m.copyright || "",
+        location: {
+          lat: parseFloat(m.lat) || 37.5665,
+          lng: parseFloat(m.lng) || 126.978,
+          address: m.address || "",
+          phone: m.phone || "",
+          email: m.email || "",
+          hours: m.hours || ""
+        }
+      };
+      return this.config;
+    });
+    return this._promise;
+  }
+};
+
+(function () {
+  const menu = [
+    { label: "홈", href: "index.html" },
+    { label: "소개", href: "about.html" },
+    { label: "포트폴리오", href: "portfolio.html" },
+    { label: "오시는 길", href: "location.html" }
+  ];
+
+  const here = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const isActive = (href) =>
+    href.toLowerCase() === here ||
+    (here === "project.html" && href === "portfolio.html");
+
+  function buildHeader(cfg) {
+    const header = document.createElement("header");
+    header.className = "site-header";
+    header.innerHTML = `
+      <div class="site-header__inner">
+        <a class="brand" href="index.html">${cfg.name}</a>
+        <button class="nav-toggle" aria-label="메뉴 열기" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <nav class="nav">
+          ${menu
+            .map(
+              (m) =>
+                `<a href="${m.href}" class="${isActive(m.href) ? "is-active" : ""}">${m.label}</a>`
+            )
+            .join("")}
+        </nav>
+      </div>`;
+
+    const toggle = header.querySelector(".nav-toggle");
+    const nav = header.querySelector(".nav");
+    toggle.addEventListener("click", () => {
+      const open = header.classList.toggle("nav-open");
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+    nav.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") header.classList.remove("nav-open");
+    });
+    return header;
+  }
+
+  function buildFooter(cfg) {
+    const loc = cfg.location || {};
+    const footer = document.createElement("footer");
+    footer.className = "site-footer";
+    footer.innerHTML = `
+      <div class="site-footer__inner">
+        <div class="footer-brand">${cfg.name}</div>
+        <div class="footer-info">
+          ${loc.address ? `<span>${loc.address}</span>` : ""}
+          ${loc.phone ? `<span>${loc.phone}</span>` : ""}
+          ${loc.email ? `<span>${loc.email}</span>` : ""}
+        </div>
+        <div class="footer-copy">${cfg.copyright || ""}</div>
+      </div>`;
+    return footer;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const cfg = await Site.load();
+    const top = document.querySelector("[data-site-header]");
+    if (top) top.replaceWith(buildHeader(cfg));
+    const bot = document.querySelector("[data-site-footer]");
+    if (bot) bot.replaceWith(buildFooter(cfg));
+    if (cfg.name && !/—/.test(document.title)) {
+      document.title = `${document.title} — ${cfg.name}`;
+    }
+  });
+})();

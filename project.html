@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>프로젝트</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+
+  <main class="container">
+    <div class="project-head">
+      <div class="eyebrow">Project</div>
+      <h1 id="p-title">불러오는 중…</h1>
+      <div class="meta" id="p-meta"></div>
+      <div class="project-desc prose" id="p-desc"></div>
+    </div>
+    <div class="project-images" id="p-images"></div>
+  </main>
+
+  <div data-site-footer></div>
+
+  <script src="assets/js/md.js"></script>
+  <script src="assets/js/projects.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const folder = new URLSearchParams(location.search).get("p");
+      if (!folder) { document.getElementById("p-title").textContent = "프로젝트를 찾을 수 없습니다."; return; }
+
+      const p = await Projects.loadOne(folder);
+      if (!p) { document.getElementById("p-title").textContent = "프로젝트를 찾을 수 없습니다."; return; }
+
+      document.title = p.title;
+      document.getElementById("p-title").textContent = p.title;
+      document.getElementById("p-meta").textContent =
+        [p.location, p.year, p.category].filter(Boolean).join("  |  ");
+      document.getElementById("p-desc").innerHTML = MD.render(p.body);
+
+      Projects.renderDetail(folder, document.getElementById("p-images"), p.title);
+    });
+  </script>
+</body>
+</html>

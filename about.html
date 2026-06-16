@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>소개</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+
+  <main class="container">
+    <div class="page-head">
+      <div class="eyebrow">About</div>
+      <h1 id="about-title">소개</h1>
+    </div>
+    <div class="prose" id="about-body"><p style="color:#888">불러오는 중…</p></div>
+  </main>
+
+  <div data-site-footer></div>
+
+  <script src="assets/js/md.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const md = await MD.load("content/about.md");
+      if (!md) { document.getElementById("about-body").innerHTML = "<p>content/about.md 파일을 찾을 수 없습니다.</p>"; return; }
+      if (md.meta.title) document.getElementById("about-title").textContent = md.meta.title;
+      document.getElementById("about-body").innerHTML = MD.render(md.body);
+    });
+  </script>
+</body>
+</html>

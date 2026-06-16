@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홈</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div data-site-header></div>
+
+  <main>
+    <section class="hero container">
+      <p class="hero-name" id="hero-name"></p>
+      <h1 id="hero-title"></h1>
+    </section>
+
+    <section class="container">
+      <div class="carousel" id="carousel"></div>
+      <div class="home-cta">
+        <a class="btn" href="portfolio.html">전체 포트폴리오 보기</a>
+      </div>
+    </section>
+  </main>
+
+  <div data-site-footer></div>
+
+  <script src="assets/js/md.js"></script>
+  <script src="assets/js/projects.js"></script>
+  <script src="assets/js/carousel.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const cfg = await Site.load();
+      document.getElementById("hero-name").textContent = cfg.name || "";
+      document.getElementById("hero-title").textContent = cfg.tagline || "";
+      initCarousel("#carousel");
+    });
+  </script>
+</body>
+</html>

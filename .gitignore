@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 편집기
+.vscode/
+.idea/
+
+# 기타
+Thumbs.db
+*.log

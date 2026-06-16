@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>포트폴리오</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div data-site-header></div>
+
+  <main class="container">
+    <div class="page-head">
+      <div class="eyebrow">Portfolio</div>
+      <h1>포트폴리오</h1>
+      <p class="lead">설계사무소가 진행한 프로젝트들을 소개합니다.</p>
+    </div>
+
+    <div class="grid" id="grid">
+      <p style="color:#888">불러오는 중…</p>
+    </div>
+  </main>
+
+  <div data-site-footer></div>
+
+  <script src="assets/js/md.js"></script>
+  <script src="assets/js/projects.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const grid = document.getElementById("grid");
+      const projects = await Projects.loadAll();
+      if (!projects.length) {
+        grid.innerHTML = `<p style="color:#888">아직 등록된 프로젝트가 없습니다. portfolio/001 폴더를 참고해 추가해 주세요.</p>`;
+        return;
+      }
+      grid.innerHTML = projects.map((p) => `
+        <a class="card" href="project.html?p=${p.folder}">
+          <div class="card__thumb">
+            ${Projects.thumbTag(p)}
+          </div>
+          <div class="card__body">
+            <h3>${p.title}</h3>
+            <p>${[p.location, p.year].filter(Boolean).join(" · ")}</p>
+            ${p.category ? `<span class="card__cat">${p.category}</span>` : ""}
+          </div>
+        </a>`).join("");
+    });
+  </script>
+</body>
+</html>

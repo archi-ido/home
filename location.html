@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오시는 길</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+
+  <main class="container">
+    <div class="page-head">
+      <div class="eyebrow">Location</div>
+      <h1>오시는 길</h1>
+    </div>
+
+    <div class="map-wrap">
+      <div id="map"><div class="map-fallback" id="map-fallback">지도를 불러오는 중…</div></div>
+    </div>
+
+    <div class="info-table" id="info-table"></div>
+
+    <div class="prose" id="loc-body" style="margin-top:40px"></div>
+  </main>
+
+  <div data-site-footer></div>
+
+  <script src="assets/js/md.js"></script>
+  <script src="assets/js/site.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const cfg = await Site.load();
+      const loc = cfg.location || {};
+
+      // 1) 연락처/주소 표
+      const rows = [
+        ["주소", loc.address],
+        ["전화", loc.phone],
+        ["이메일", loc.email],
+        ["운영시간", loc.hours]
+      ].filter(([, v]) => v);
+      document.getElementById("info-table").innerHTML =
+        rows.map(([k, v]) => `<div class="row"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+      // 추가 안내문(선택): content/location.md
+      const md = await MD.load("content/location.md");
+      if (md) document.getElementById("loc-body").innerHTML = MD.render(md.body);
+
+      // 2) 카카오맵 로드
+      loadKakaoMap(cfg);
+    });
+
+    function loadKakaoMap(cfg) {
+      const key = cfg.kakaoApiKey || "";
+      const fb = document.getElementById("map-fallback");
+      if (!key) {
+        fb.innerHTML = "카카오 JavaScript 키를 content/site.md 에 입력하면 지도가 표시됩니다.";
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`;
+      s.onload = () => kakao.maps.load(initMap);
+      s.onerror = () => (fb.innerHTML = "지도를 불러오지 못했습니다. 카카오 키와 도메인 등록을 확인하세요.");
+      document.head.appendChild(s);
+
+      function initMap() {
+        const loc = cfg.location || {};
+        const center = new kakao.maps.LatLng(loc.lat, loc.lng);
+        const map = new kakao.maps.Map(document.getElementById("map"), { center, level: 3 });
+        const marker = new kakao.maps.Marker({ position: center });
+        marker.setMap(map);
+        const iw = new kakao.maps.InfoWindow({
+          content: `<div style="padding:8px 12px;font-size:13px;white-space:nowrap">${cfg.name || "위치"}</div>`
+        });
+        iw.open(map, marker);
+        map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+      }
+    }
+  </script>
+</body>
+</html>
