@@ -30,23 +30,25 @@ const Site = {
 
 (function () {
   const menu = [
-    { label: "홈", href: "index.html" },
-    { label: "소개", href: "about.html" },
-    { label: "포트폴리오", href: "portfolio.html" },
-    { label: "오시는 길", href: "location.html" }
+    { label: "홈", href: "index" },
+    { label: "소개", href: "about" },
+    { label: "포트폴리오", href: "portfolio" },
+    { label: "오시는 길", href: "location" }
   ];
 
-  const here = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const here = (location.pathname.split("/").pop() || "index")
+    .replace(/\.html$/, "")
+    .toLowerCase() || "index";
   const isActive = (href) =>
     href.toLowerCase() === here ||
-    (here === "project.html" && href === "portfolio.html");
+    (here === "project" && href === "portfolio");
 
   function buildHeader(cfg) {
     const header = document.createElement("header");
     header.className = "site-header";
     header.innerHTML = `
       <div class="site-header__inner">
-        <a class="brand" href="index.html">
+        <a class="brand" href="index">
           <img class="brand__logo" src="content/logo.jpg" alt="${cfg.name} 로고">
           <span class="brand__name">${cfg.name}</span>
         </a>

@@ -14,7 +14,7 @@ async function initCarousel(rootSelector) {
       ${projects
         .map(
           (p) => `
-        <a class="carousel__slide" href="project.html?p=${p.folder}">
+        <a class="carousel__slide" href="project?p=${p.folder}">
           ${Projects.thumbTag(p)}
           <div class="carousel__caption">
             <h3>${p.title}</h3>

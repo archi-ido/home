@@ -36,7 +36,7 @@
         return;
       }
       grid.innerHTML = projects.map((p) => `
-        <a class="card" href="project.html?p=${p.folder}">
+        <a class="card" href="project?p=${p.folder}">
           <div class="card__thumb">
             ${Projects.thumbTag(p)}
           </div>
