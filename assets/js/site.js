@@ -25,6 +25,25 @@ const Site = {
       return this.config;
     });
     return this._promise;
+  },
+
+  /* 페이지 상단(eyebrow + 타이틀)을 md frontmatter로 채운다.
+     meta에 값이 없으면 해당 요소를 숨기고, 둘 다 없으면 영역 전체를 숨긴다.
+     필요한 요소 id: #page-head, #page-eyebrow, #page-title */
+  renderPageHead(meta) {
+    meta = meta || {};
+    const head = document.getElementById("page-head");
+    const eyebrow = document.getElementById("page-eyebrow");
+    const title = document.getElementById("page-title");
+    if (eyebrow) {
+      if (meta.eyebrow) { eyebrow.textContent = meta.eyebrow; eyebrow.hidden = false; }
+      else eyebrow.hidden = true;
+    }
+    if (title) {
+      if (meta.title) { title.textContent = meta.title; title.hidden = false; }
+      else title.hidden = true;
+    }
+    if (head) head.hidden = !(meta.eyebrow || meta.title);
   }
 };
 

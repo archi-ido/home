@@ -12,9 +12,9 @@
   <div data-site-header></div>
 
   <main class="container">
-    <div class="page-head">
-      <div class="eyebrow">About</div>
-      <h1 id="about-title">소개</h1>
+    <div class="page-head" id="page-head" hidden>
+      <div class="eyebrow" id="page-eyebrow" hidden></div>
+      <h1 id="page-title" hidden></h1>
     </div>
     <div class="prose" id="about-body"><p style="color:#888">불러오는 중…</p></div>
   </main>
@@ -27,7 +27,7 @@
     document.addEventListener("DOMContentLoaded", async () => {
       const md = await MD.load("content/about.md");
       if (!md) { document.getElementById("about-body").innerHTML = "<p>content/about.md 파일을 찾을 수 없습니다.</p>"; return; }
-      if (md.meta.title) document.getElementById("about-title").textContent = md.meta.title;
+      Site.renderPageHead(md.meta);
       document.getElementById("about-body").innerHTML = MD.render(md.body);
     });
   </script>

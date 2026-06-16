@@ -12,9 +12,9 @@
   <div data-site-header></div>
 
   <main class="container">
-    <div class="page-head">
-      <div class="eyebrow">Location</div>
-      <h1>오시는 길</h1>
+    <div class="page-head" id="page-head" hidden>
+      <div class="eyebrow" id="page-eyebrow" hidden></div>
+      <h1 id="page-title" hidden></h1>
     </div>
 
     <div class="map-wrap">
@@ -47,7 +47,10 @@
 
       // 추가 안내문(선택): content/location.md
       const md = await MD.load("content/location.md");
-      if (md) document.getElementById("loc-body").innerHTML = MD.render(md.body);
+      if (md) {
+        Site.renderPageHead(md.meta);
+        document.getElementById("loc-body").innerHTML = MD.render(md.body);
+      }
 
       // 2) 카카오맵 로드
       loadKakaoMap(cfg);
