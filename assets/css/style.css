@@ -42,7 +42,11 @@ img { display: block; max-width: 100%; }
   display: flex; align-items: center; justify-content: space-between;
 }
 .brand {
+  display: inline-flex; align-items: center; gap: 10px;
   font-size: 19px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+}
+.brand__logo {
+  height: 32px; width: auto; display: block; border-radius: 4px;
 }
 .nav { display: flex; gap: 34px; }
 .nav a {

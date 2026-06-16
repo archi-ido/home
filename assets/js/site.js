@@ -46,7 +46,10 @@ const Site = {
     header.className = "site-header";
     header.innerHTML = `
       <div class="site-header__inner">
-        <a class="brand" href="index.html">${cfg.name}</a>
+        <a class="brand" href="index.html">
+          <img class="brand__logo" src="content/logo.jpg" alt="${cfg.name} 로고">
+          <span class="brand__name">${cfg.name}</span>
+        </a>
         <button class="nav-toggle" aria-label="메뉴 열기" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
