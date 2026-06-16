@@ -1,5 +1,5 @@
 ---
-name: ARCHITECT IDO
+name: ARCHITECT [I-DO]
 tagline: 공간을 설계하고, 삶을 디자인합니다
 phone: 042-713-9099
 email: ido9099@daum.net
