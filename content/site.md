@@ -7,6 +7,6 @@ address: 서울특별시 성동구 성수동 ○○빌딩 3층
 hours: 평일 09:00 – 18:00 (주말·공휴일 휴무)
 lat: 37.544579
 lng: 127.055961
-kakaoApiKey: 
+kakaoApiKey: 5c1629f1383f76ad10f21339d4774387
 copyright: © 2026 MINGU STUDIO. All rights reserved.
 ---
