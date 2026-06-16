@@ -113,6 +113,15 @@ const Site = {
     return footer;
   }
 
+  // 페이지를 부드럽게 등장시킨다(조립이 끝난 뒤 한 번에 페이드인).
+  const reveal = () => {
+    // 헤더 주입 직후 다음 프레임에 표시 → 레이아웃이 안정된 상태에서 페이드인
+    requestAnimationFrame(() => document.body.classList.add("is-ready"));
+  };
+  // 안전장치: 무슨 일이 있어도 화면이 빈 채로 남지 않도록 보장
+  window.addEventListener("load", reveal);
+  setTimeout(reveal, 1500);
+
   document.addEventListener("DOMContentLoaded", async () => {
     const cfg = await Site.load();
     const top = document.querySelector("[data-site-header]");
@@ -122,5 +131,6 @@ const Site = {
     if (cfg.name && !/—/.test(document.title)) {
       document.title = `${document.title} — ${cfg.name}`;
     }
+    reveal();
   });
 })();
