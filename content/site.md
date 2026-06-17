@@ -1,5 +1,5 @@
 ---
-name: ARCHITECT [I-DO]
+name: 건축사사무소 이도
 tagline: 공간을 설계하고, 삶을 디자인합니다
 phone: 042-713-9099
 email: ido9099@daum.net
