@@ -10,26 +10,23 @@ const Projects = {
     return String(n).padStart(3, "0");
   },
 
-  // 전체 프로젝트 목록. 폴더를 10개씩 병렬로 탐색하고, 한 묶음이 전부 비면 종료.
+  // 전체 프로젝트 목록. portfolio/info.md 에 나열된 폴더명 = 노출 순서.
+  // 목록에 없거나 오타/존재하지 않는 폴더명은 자동으로(에러 없이) 제외된다.
   async loadAll() {
     if (this._cache) return this._cache;
-    const CHUNK = 10;
-    const found = [];
-    for (let start = 1; start <= 300; start += CHUNK) {
-      const idxs = Array.from({ length: CHUNK }, (_, k) => start + k);
-      const results = await Promise.all(
-        idxs.map(async (i) => {
-          const folder = this._pad(i);
-          const md = await MD.load(`portfolio/${folder}/info.md`);
-          return md ? { folder, md } : null;
-        })
-      );
-      const hits = results.filter(Boolean);
-      found.push(...hits);
-      if (hits.length === 0) break; // 묶음 전체가 비었으면 더 없다고 보고 종료
-    }
 
-    const list = found.map(({ folder, md }) => ({
+    const orderMd = await MD.load("portfolio/info.md");
+    const names = this._parseOrder(orderMd ? orderMd.body : "");
+
+    // 나열된 순서를 유지하며 각 폴더의 info.md 를 로드 (Promise.all은 순서 보존)
+    const results = await Promise.all(
+      names.map(async (folder) => {
+        const md = await MD.load(`portfolio/${folder}/info.md`);
+        return md ? { folder, md } : null; // 없는 폴더는 null → 아래에서 조용히 제외
+      })
+    );
+
+    const list = results.filter(Boolean).map(({ folder, md }) => ({
       folder,
       title: md.meta.title || "(제목 없음)",
       location: md.meta.location || "",
@@ -38,9 +35,18 @@ const Projects = {
       // 썸네일 = 첫 이미지(001). 실제 로딩은 <img>가 담당.
       thumbBase: `portfolio/${folder}/001`
     }));
-    list.sort((a, b) => b.folder.localeCompare(a.folder)); // 최신(번호 큰) 순
     this._cache = list;
     return list;
+  },
+
+  // portfolio/info.md 본문을 폴더명 목록으로 파싱한다.
+  // 빈 줄 / '#' 주석 / '<!-- -->' 주석 / '- ' 목록기호는 무시하고, 앞뒤 공백을 제거한다.
+  _parseOrder(body) {
+    return (body || "")
+      .replace(/<!--[\s\S]*?-->/g, "") // HTML 주석 블록 제거
+      .split("\n")
+      .map((line) => line.replace(/^\s*-\s*/, "").trim()) // 목록기호/공백 제거
+      .filter((line) => line && !line.startsWith("#")); // 빈 줄·# 주석 제외
   },
 
   // 단일 프로젝트 메타/본문 로드 (상세 페이지용)
