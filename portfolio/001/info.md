@@ -1,7 +1,7 @@
 ---
 title: 갈마동 상가주택
 location: 대전 서구
-year: 2026
+year: 2021
 category: 상가주택
 ---
 
