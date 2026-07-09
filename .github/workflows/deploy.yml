@@ -1,0 +1,66 @@
+name: 이미지 최적화 + 사이트 배포
+
+# 레포에 push 되면 (1) portfolio 이미지를 webp로 변환하고 원본을 정리한 뒤
+# (2) 결과를 되커밋하고 (3) 변환된 상태로 GitHub Pages에 배포한다.
+# 한 워크플로에서 순차로 처리하므로 배포는 1회만 일어난다.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # Actions 탭에서 수동 실행
+
+permissions:
+  contents: write # 변환 결과 되커밋
+  pages: write # Pages 배포
+  id-token: write # Pages 배포 인증
+
+# 배포는 한 번에 하나만. 새 push가 오면 이전 실행 취소.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Pillow 설치
+        run: python -m pip install --quiet Pillow
+
+      # portfolio/ 하위 전체를 스캔해 남아있는 jpg/png를 모두 변환(전수검사).
+      - name: 이미지 리사이즈 + webp 변환
+        run: python scripts/optimize_images.py
+
+      # 변환으로 워킹트리가 바뀌었으면 되커밋(원본 jpg 제거 상태를 저장소에 반영).
+      # GITHUB_TOKEN push는 워크플로를 재트리거하지 않으므로 무한 루프가 없다.
+      - name: 변환 결과 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+          else
+            git commit -m "chore: 포트폴리오 이미지 webp 자동 변환 [skip ci]"
+            git push
+          fi
+
+      # 변환된 현재 상태 그대로 Pages에 배포 (webp 반영본).
+      - name: Pages 설정
+        uses: actions/configure-pages@v5
+
+      - name: 사이트 아티팩트 업로드
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: 배포
+        id: deploy
+        uses: actions/deploy-pages@v4
