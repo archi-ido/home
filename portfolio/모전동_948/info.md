@@ -1,6 +1,6 @@
 ---
 title: 모전동 아파트
-location: 경북 문경시
+location: 경북 문경
 year: 2019
 category: 공동주택
 ---
