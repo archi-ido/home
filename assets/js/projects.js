@@ -3,8 +3,8 @@
    이미지는 "있는지 미리 검사"하지 않고 곧바로 <img>로 그려서 브라우저가 병렬 로드하게 한다(빠름). */
 const Projects = {
   _cache: null,
-  // 지원 확장자(앞쪽이 우선). jpg가 대부분이라 첫 시도에서 바로 로드된다.
-  _exts: ["jpg", "jpeg", "png", "webp"],
+  // 지원 확장자(앞쪽이 우선). 이미지는 webp로 관리하며, 나머지는 폴백용.
+  _exts: ["webp", "jpg", "jpeg", "png"],
 
   _pad(n) {
     return String(n).padStart(3, "0");
@@ -31,9 +31,8 @@ const Projects = {
       title: md.meta.title || "(제목 없음)",
       location: md.meta.location || "",
       year: md.meta.year || "",
-      category: md.meta.category || "",
-      // 썸네일 = 첫 이미지(001). 실제 로딩은 <img>가 담당.
-      thumbBase: `portfolio/${folder}/001`
+      category: md.meta.category || ""
+      // 썸네일은 thumbTag()가 folder 기준으로 001부터 폴백해서 로드한다.
     }));
     this._cache = list;
     return list;
@@ -64,31 +63,43 @@ const Projects = {
     };
   },
 
-  // 썸네일 <img> 태그 문자열 (확장자 폴백 포함). 캐로셀/목록 공용.
+  // 대표 썸네일로 시도할 최대 번호. 001~008 중 처음 존재하는 이미지를 썸네일로 쓴다.
+  _thumbMaxN: 8,
+
+  // 썸네일 <img> 태그 문자열. 캐로셀/목록 공용.
+  // 001 이 없으면 002, 003 … 순으로 폴백하고(번호+확장자), 하나도 없으면 카드를 숨긴다.
   thumbTag(p, extraClass) {
-    return `<img class="${extraClass || ""}" src="${p.thumbBase}.${this._exts[0]}"
-      data-base="${p.thumbBase}" data-ei="0" alt="${p.title}" loading="lazy"
+    const first = `portfolio/${p.folder}/${this._pad(1)}.${this._exts[0]}`;
+    return `<img class="${extraClass || ""}" src="${first}"
+      data-folder="${p.folder}" data-n="1" data-ei="0" alt="${p.title}" loading="lazy"
       onerror="Projects.onThumbError(this)">`;
   },
 
-  // 썸네일 로딩 실패 시 다음 확장자로 시도, 모두 실패하면 카드/슬라이드 숨김.
+  // 썸네일 로딩 실패 시: 같은 번호의 다음 확장자 → 없으면 다음 번호(001→002…)로 시도.
   onThumbError(img) {
-    const next = Number(img.dataset.ei || 0) + 1;
-    if (next < this._exts.length) {
-      img.dataset.ei = String(next);
-      img.src = `${img.dataset.base}.${this._exts[next]}`;
-    } else {
+    let n = Number(img.dataset.n || 1);
+    let ei = Number(img.dataset.ei || 0) + 1;
+    if (ei >= this._exts.length) { ei = 0; n += 1; } // 확장자 모두 실패 → 다음 번호
+    if (n > this._thumbMaxN) { // 대표 이미지를 못 찾음 → 카드/슬라이드 숨김
       img.onerror = null;
       const box = img.closest(".carousel__slide, .card");
       if (box) box.style.display = "none";
+      return;
     }
+    img.dataset.n = String(n);
+    img.dataset.ei = String(ei);
+    img.src = `portfolio/${img.dataset.folder}/${this._pad(n)}.${this._exts[ei]}`;
   },
 
-  // 상세 이미지: 001부터 순차로 그린다. 첫 이미지가 로드되는 즉시 화면에 표시되고,
-  // 없는 번호를 만나면 멈춘다. (모두 받을 때까지 기다리지 않음 → 체감 속도 빠름)
+  // 상세 이미지: 001부터 순차로 그린다. 첫 이미지가 로드되는 즉시 화면에 표시된다.
+  // 없는 번호가 있어도 바로 멈추지 않고 다음 번호를 시도하며(001이 없어도 002부터 표시),
+  // 연속으로 _detailMaxMiss 개를 못 찾으면 더 없다고 보고 종료한다.
+  _detailMaxMiss: 2,
+
   renderDetail(folder, container, alt) {
     const exts = this._exts;
-    const loadAt = (index) => {
+    const loadAt = (index, miss) => {
+      if (miss > this._detailMaxMiss) return; // 연속으로 여러 번 비면 종료
       const base = `portfolio/${folder}/${this._pad(index)}`;
       const img = document.createElement("img");
       img.alt = alt || "";
@@ -99,17 +110,18 @@ const Projects = {
         if (ei < exts.length) {
           img.src = `${base}.${exts[ei]}`; // 같은 번호, 다른 확장자 재시도
         } else {
-          img.onerror = null; // 이 번호 이미지는 없음 → 종료
+          img.onerror = null; // 이 번호 이미지는 없음 → 다음 번호로(비었으므로 miss+1)
           img.remove();
+          loadAt(index + 1, miss + 1);
         }
       };
       img.onload = () => {
         img.onerror = null;
-        loadAt(index + 1); // 다음 번호로
+        loadAt(index + 1, 0); // 성공 → 다음 번호(miss 리셋)
       };
       container.appendChild(img);
       img.src = `${base}.${exts[0]}`;
     };
-    loadAt(1);
+    loadAt(1, 0);
   }
 };
