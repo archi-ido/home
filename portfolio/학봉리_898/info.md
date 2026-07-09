@@ -1,6 +1,6 @@
 ---
 title: 학봉리 숙박시설
-location: 충남 공주시
+location: 충남 공주
 year: 2014
 category: 숙박시설
 ---
