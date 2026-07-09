@@ -13,10 +13,11 @@ permissions:
   pages: write # Pages 배포
   id-token: write # Pages 배포 인증
 
-# 배포는 한 번에 하나만. 새 push가 오면 이전 실행 취소.
+# 배포는 큐(대기) 방식: 진행 중 배포를 취소하지 않고 순서대로 완료한다.
+# (연속 push 시 "Canceling…"으로 잘리는 문제 방지)
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -27,20 +28,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      # portfolio 하위에 변환 대상(jpg/jpeg/png, 대소문자 무관)이 있는지 먼저 값싸게 확인.
+      # 없으면(대부분의 코드/md 수정 push) 아래 설치·변환·되커밋을 통째로 건너뛴다.
+      - name: 변환 대상 존재 확인
+        id: check
+        run: |
+          if find portfolio -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "변환 대상 있음 → 변환 진행"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "변환 대상 없음 → 변환 건너뜀"
+          fi
+
+      - name: Python 설정
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Pillow 설치
+        if: steps.check.outputs.found == 'true'
         run: python -m pip install --quiet Pillow
 
-      # portfolio/ 하위 전체를 스캔해 남아있는 jpg/png를 모두 변환(전수검사).
+      # portfolio/ 하위 전체를 스캔해 남아있는 jpg/jpeg/png를 모두 변환(전수검사).
       - name: 이미지 리사이즈 + webp 변환
+        if: steps.check.outputs.found == 'true'
         run: python scripts/optimize_images.py
 
-      # 변환으로 워킹트리가 바뀌었으면 되커밋(원본 jpg 제거 상태를 저장소에 반영).
+      # 변환으로 워킹트리가 바뀌었으면 되커밋(원본 제거 상태를 저장소에 반영).
       # GITHUB_TOKEN push는 워크플로를 재트리거하지 않으므로 무한 루프가 없다.
       - name: 변환 결과 커밋
+        if: steps.check.outputs.found == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -52,7 +71,7 @@ jobs:
             git push
           fi
 
-      # 변환된 현재 상태 그대로 Pages에 배포 (webp 반영본).
+      # 변환된 현재 상태 그대로 Pages에 배포 (항상 실행).
       - name: Pages 설정
         uses: actions/configure-pages@v5
 
