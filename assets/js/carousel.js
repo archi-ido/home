@@ -55,15 +55,45 @@ async function initCarousel(rootSelector) {
   root.addEventListener("mouseenter", stop);
   root.addEventListener("mouseleave", start);
 
-  // 모바일 스와이프
-  let x0 = null;
-  track.addEventListener("touchstart", (e) => (x0 = e.touches[0].clientX), { passive: true });
-  track.addEventListener("touchend", (e) => {
-    if (x0 === null) return;
-    const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
-    x0 = null;
+  // 마우스 드래그 + 터치 스와이프 (Pointer Events로 통합)
+  // 드래그하는 동안 슬라이드가 손가락/커서를 실시간으로 따라오고,
+  // 놓을 때 이동 거리가 임계값을 넘으면 다음/이전으로 넘어간다.
+  const THRESHOLD = 40; // px. 이보다 적게 움직이면 제자리로 복귀
+  let dragging = false, startX = 0, dx = 0, width = 1;
+
+  track.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    startX = e.clientX;
+    dx = 0;
+    width = root.clientWidth || 1;
+    track.style.transition = "none"; // 드래그 중엔 실시간으로 따라오게
+    stop();
+    root.classList.add("is-dragging");
+    track.setPointerCapture(e.pointerId);
+  });
+
+  track.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    dx = e.clientX - startX;
+    const pct = (dx / width) * 100;
+    track.style.transform = `translateX(calc(-${index * 100}% + ${pct}%))`;
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    track.style.transition = ""; // CSS의 부드러운 애니메이션 복원
+    root.classList.remove("is-dragging");
+    if (Math.abs(dx) > THRESHOLD) (dx < 0 ? next : prev)();
+    else go(index); // 임계값 미만 → 원래 위치로
     start();
+  }
+  track.addEventListener("pointerup", endDrag);
+  track.addEventListener("pointercancel", endDrag);
+
+  // 드래그였다면(살짝의 움직임이 아니라면) 슬라이드 링크 클릭을 막는다.
+  track.addEventListener("click", (e) => {
+    if (Math.abs(dx) > 5) e.preventDefault();
   });
 
   go(0);

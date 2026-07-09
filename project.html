@@ -34,7 +34,8 @@
       const p = await Projects.loadOne(folder);
       if (!p) { document.getElementById("p-title").textContent = "프로젝트를 찾을 수 없습니다."; return; }
 
-      document.title = p.title;
+      const cfg = await Site.load();
+      document.title = cfg.name ? `[${cfg.name}] ${p.title}` : p.title;
       document.getElementById("p-title").textContent = p.title;
       document.getElementById("p-meta").textContent =
         [p.location, p.year, p.category].filter(Boolean).join("  |  ");

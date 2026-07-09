@@ -128,8 +128,8 @@ const Site = {
     if (top) top.replaceWith(buildHeader(cfg));
     const bot = document.querySelector("[data-site-footer]");
     if (bot) bot.replaceWith(buildFooter(cfg));
-    if (cfg.name && !/—/.test(document.title)) {
-      document.title = `${document.title} — ${cfg.name}`;
+    if (cfg.name && !document.title.startsWith("[")) {
+      document.title = `[${cfg.name}] ${document.title}`;
     }
     reveal();
   });
