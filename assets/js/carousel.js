@@ -58,32 +58,42 @@ async function initCarousel(rootSelector) {
   // 마우스 드래그 + 터치 스와이프 (Pointer Events로 통합)
   // 드래그하는 동안 슬라이드가 손가락/커서를 실시간으로 따라오고,
   // 놓을 때 이동 거리가 임계값을 넘으면 다음/이전으로 넘어간다.
-  const THRESHOLD = 40; // px. 이보다 적게 움직이면 제자리로 복귀
-  let dragging = false, startX = 0, dx = 0, width = 1;
+  const THRESHOLD = 40; // px. 놓았을 때 이보다 많이 움직였으면 다음/이전으로
+  const DRAG_START = 6; // px. 이 거리를 넘겨야 '드래그'로 판단(그 전까진 클릭)
+  let pressing = false, dragging = false, startX = 0, dx = 0, width = 1;
 
   // 링크/이미지의 네이티브 드래그가 시작되면 Pointer 시퀀스가 끊기므로 막는다.
   track.addEventListener("dragstart", (e) => e.preventDefault());
 
   track.addEventListener("pointerdown", (e) => {
-    dragging = true;
+    pressing = true;
+    dragging = false;
     startX = e.clientX;
     dx = 0;
     width = root.clientWidth || 1;
-    track.style.transition = "none"; // 드래그 중엔 실시간으로 따라오게
-    stop();
-    root.classList.add("is-dragging");
-    track.setPointerCapture(e.pointerId);
   });
 
   track.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
+    if (!pressing) return;
     dx = e.clientX - startX;
-    const pct = (dx / width) * 100;
-    track.style.transform = `translateX(calc(-${index * 100}% + ${pct}%))`;
+    // 일정 거리 이상 움직인 순간부터 드래그 모드 진입 (이때만 캡처)
+    if (!dragging && Math.abs(dx) > DRAG_START) {
+      dragging = true;
+      track.style.transition = "none"; // 드래그 중엔 실시간으로 따라오게
+      root.classList.add("is-dragging");
+      stop();
+      track.setPointerCapture(e.pointerId);
+    }
+    if (dragging) {
+      const pct = (dx / width) * 100;
+      track.style.transform = `translateX(calc(-${index * 100}% + ${pct}%))`;
+    }
   });
 
   function endDrag() {
-    if (!dragging) return;
+    if (!pressing) return;
+    pressing = false;
+    if (!dragging) return; // 움직임이 거의 없었으면 클릭 → 링크 이동 그대로 허용
     dragging = false;
     track.style.transition = ""; // CSS의 부드러운 애니메이션 복원
     root.classList.remove("is-dragging");
@@ -94,9 +104,9 @@ async function initCarousel(rootSelector) {
   track.addEventListener("pointerup", endDrag);
   track.addEventListener("pointercancel", endDrag);
 
-  // 드래그였다면(살짝의 움직임이 아니라면) 슬라이드 링크 클릭을 막는다.
+  // 드래그로 끝난 클릭은 링크 이동을 막는다. (단순 클릭은 dx가 작아 통과)
   track.addEventListener("click", (e) => {
-    if (Math.abs(dx) > 5) e.preventDefault();
+    if (Math.abs(dx) > DRAG_START) e.preventDefault();
   });
 
   go(0);
