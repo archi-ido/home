@@ -61,6 +61,9 @@ async function initCarousel(rootSelector) {
   const THRESHOLD = 40; // px. 이보다 적게 움직이면 제자리로 복귀
   let dragging = false, startX = 0, dx = 0, width = 1;
 
+  // 링크/이미지의 네이티브 드래그가 시작되면 Pointer 시퀀스가 끊기므로 막는다.
+  track.addEventListener("dragstart", (e) => e.preventDefault());
+
   track.addEventListener("pointerdown", (e) => {
     dragging = true;
     startX = e.clientX;
