@@ -1,6 +1,6 @@
 ---
 title: 무실동 주차타워
-location: 강원도 원주시
+location: 강원 원주
 year: 2012
 category: 근린생활시설
 ---
