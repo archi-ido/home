@@ -1,7 +1,7 @@
 ---
 title: 주진동 아파트
 location: 경남 양산
-year: 2023
+year: 2026
 category: 공동주택
 ---
 
