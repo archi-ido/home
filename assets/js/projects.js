@@ -10,12 +10,12 @@ const Projects = {
     return String(n).padStart(3, "0");
   },
 
-  // 전체 프로젝트 목록. portfolio/info.md 에 나열된 폴더명 = 노출 순서.
+  // 전체 프로젝트 목록. portfolio/list.md 에 나열된 폴더명 = 노출 순서.
   // 목록에 없거나 오타/존재하지 않는 폴더명은 자동으로(에러 없이) 제외된다.
   async loadAll() {
     if (this._cache) return this._cache;
 
-    const orderMd = await MD.load("portfolio/info.md");
+    const orderMd = await MD.load("portfolio/list.md");
     const names = this._parseOrder(orderMd ? orderMd.body : "");
 
     // 나열된 순서를 유지하며 각 폴더의 info.md 를 로드 (Promise.all은 순서 보존)
@@ -38,7 +38,7 @@ const Projects = {
     return list;
   },
 
-  // portfolio/info.md 본문을 폴더명 목록으로 파싱한다.
+  // portfolio/list.md 본문을 폴더명 목록으로 파싱한다.
   // 빈 줄 / '#' 주석 / '<!-- -->' 주석 / '- ' 목록기호는 무시하고, 앞뒤 공백을 제거한다.
   _parseOrder(body) {
     return (body || "")
@@ -46,6 +46,30 @@ const Projects = {
       .split("\n")
       .map((line) => line.replace(/^\s*-\s*/, "").trim()) // 목록기호/공백 제거
       .filter((line) => line && !line.startsWith("#")); // 빈 줄·# 주석 제외
+  },
+
+  // portfolio/info.md 에서 카테고리 노출 설정을 읽는다.
+  //   frontmatter: showAll(전체 버튼 표시 여부, 기본 true) / allLabel(전체 버튼 이름, 기본 "전체")
+  //   본문 각 줄: "실제카테고리값 = 노출이름"  또는  "실제카테고리값"(이름 동일)
+  //   → 여기 나열한 카테고리만, 이 순서대로 필터에 노출된다.
+  // info.md 가 없으면 items: [] 를 돌려주고, 이때 화면은 데이터에서 자동 추출로 폴백한다.
+  async loadCatConfig() {
+    const md = await MD.load("portfolio/info.md");
+    const meta = (md && md.meta) || {};
+    const showAll = String(meta.showAll == null ? "true" : meta.showAll).toLowerCase() !== "false";
+    const allLabel = meta.allLabel || "전체";
+
+    const items = [];
+    const body = (md ? md.body : "").replace(/<!--[\s\S]*?-->/g, "");
+    body.split("\n").forEach((raw) => {
+      const line = raw.replace(/^\s*-\s*/, "").trim();
+      if (!line || line.startsWith("#")) return;
+      const eq = line.indexOf("=");
+      const value = (eq === -1 ? line : line.slice(0, eq)).trim();
+      const label = (eq === -1 ? line : line.slice(eq + 1)).trim();
+      if (value) items.push({ value, label: label || value });
+    });
+    return { showAll, allLabel, items };
   },
 
   // 단일 프로젝트 메타/본문 로드 (상세 페이지용)

@@ -17,6 +17,8 @@
       <p class="lead">설계사무소가 진행한 프로젝트들을 소개합니다.</p>
     </div>
 
+    <div class="cat-filter" id="cat-filter"></div>
+
     <div class="grid" id="grid">
       <p style="color:#888">불러오는 중…</p>
     </div>
@@ -30,12 +32,14 @@
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const grid = document.getElementById("grid");
+      const filterBar = document.getElementById("cat-filter");
       const projects = await Projects.loadAll();
       if (!projects.length) {
         grid.innerHTML = `<p style="color:#888">아직 등록된 프로젝트가 없습니다. portfolio/001 폴더를 참고해 추가해 주세요.</p>`;
         return;
       }
-      grid.innerHTML = projects.map((p) => `
+
+      const cardHTML = (p) => `
         <a class="card" href="project?p=${p.folder}">
           <div class="card__thumb">
             ${Projects.thumbTag(p)}
@@ -45,7 +49,42 @@
             <p>${[p.location, p.year].filter(Boolean).join(" · ")}</p>
             ${p.category ? `<span class="card__cat">${p.category}</span>` : ""}
           </div>
-        </a>`).join("");
+        </a>`;
+
+      const ALL = "__ALL__";
+      const render = (val) => {
+        const list = val === ALL ? projects : projects.filter((p) => p.category === val);
+        grid.innerHTML = list.length
+          ? list.map(cardHTML).join("")
+          : `<p style="color:#888">해당 카테고리의 프로젝트가 없습니다.</p>`;
+      };
+
+      // 카테고리 필터 구성: portfolio/info.md 설정을 우선 사용.
+      // 설정이 없으면 데이터에서 자동 추출(등장 순서 유지)로 폴백한다.
+      const config = await Projects.loadCatConfig();
+      let cats = config.items; // [{ value, label }]
+      if (!cats.length) {
+        const seen = [];
+        projects.forEach((p) => { if (p.category && !seen.includes(p.category)) seen.push(p.category); });
+        cats = seen.map((c) => ({ value: c, label: c }));
+      }
+
+      const buttons = [];
+      if (config.showAll) buttons.push({ value: ALL, label: config.allLabel });
+      buttons.push(...cats);
+
+      filterBar.innerHTML = buttons
+        .map((b, i) => `<button data-cat="${b.value}" class="${i === 0 ? "is-active" : ""}">${b.label}</button>`)
+        .join("");
+
+      filterBar.addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        filterBar.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === btn));
+        render(btn.dataset.cat);
+      });
+
+      render(buttons[0] ? buttons[0].value : ALL);
     });
   </script>
 </body>

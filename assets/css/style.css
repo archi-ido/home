@@ -160,6 +160,21 @@ body.is-ready { opacity: 1; transition: opacity .4s ease; }
 .btn:hover { background: var(--fg); color: #fff; }
 
 /* ── 포트폴리오 그리드 ─────────────────────────────── */
+/* ── 카테고리 필터 (리스트 위 가운데) ─────────────── */
+.cat-filter {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  margin: 0 0 40px;
+}
+.cat-filter button {
+  font-size: 14px; color: var(--fg-soft); cursor: pointer;
+  background: none; border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 18px; transition: all .2s;
+}
+.cat-filter button:hover { border-color: var(--fg); color: var(--fg); }
+.cat-filter button.is-active {
+  background: var(--fg); color: #fff; border-color: var(--fg);
+}
+
 .grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;
 }
